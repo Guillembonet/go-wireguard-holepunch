@@ -5,7 +5,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/guillembonet/go-wireguard-udpholepunch/utils"
+	"github.com/guillembonet/go-wireguard-holepunch/utils"
 	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
@@ -66,7 +66,7 @@ func (m *Manager) createDevice() error {
 		}
 		return nil
 	}
-	return fmt.Errorf("device with (interface name = %s) already exists", m.iface)
+	return fmt.Errorf("device with interface name: %s already exists", m.iface)
 }
 
 // SetPeer sets the wireguard peer
@@ -136,9 +136,12 @@ func (m *Manager) GetPeers(publicKey wgtypes.Key) ([]wgtypes.Peer, error) {
 	return device.Peers, nil
 }
 
-func (m *Manager) SetInterfaceIP(ip string) error {
+func (m *Manager) SetInterfaceIP(ip net.IP) error {
+	if ip == nil {
+		return fmt.Errorf("invalid ip")
+	}
 	if err := utils.SudoExec("ip", "address", "flush", "dev", m.iface); err != nil {
 		return err
 	}
-	return utils.SudoExec("ip", "address", "replace", "dev", m.iface, ip)
+	return utils.SudoExec("ip", "address", "replace", "dev", m.iface, ip.String())
 }

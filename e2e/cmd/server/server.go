@@ -7,8 +7,8 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/guillembonet/go-wireguard-udpholepunch/e2e/common/di"
-	"github.com/guillembonet/go-wireguard-udpholepunch/e2e/common/params"
+	"github.com/guillembonet/go-wireguard-holepunch/e2e/common/di"
+	"github.com/guillembonet/go-wireguard-holepunch/e2e/common/params"
 )
 
 func main() {

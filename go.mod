@@ -1,4 +1,4 @@
-module github.com/guillembonet/go-wireguard-udpholepunch
+module github.com/guillembonet/go-wireguard-holepunch
 
 go 1.17
 
@@ -20,6 +20,7 @@ require (
 	github.com/josharian/native v0.0.0-20200817173448-b6b71def0850 // indirect
 	github.com/json-iterator/go v1.1.7 // indirect
 	github.com/leodido/go-urn v1.1.0 // indirect
+	github.com/magefile/mage v1.12.1
 	github.com/mattn/go-isatty v0.0.9 // indirect
 	github.com/mdlayher/ethernet v0.0.0-20190313224307-5b5fc417d966 // indirect
 	github.com/mdlayher/genetlink v1.1.0 // indirect

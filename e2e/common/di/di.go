@@ -4,12 +4,12 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/guillembonet/go-wireguard-udpholepunch/communication"
-	"github.com/guillembonet/go-wireguard-udpholepunch/communication/client"
-	"github.com/guillembonet/go-wireguard-udpholepunch/communication/server"
-	"github.com/guillembonet/go-wireguard-udpholepunch/connection"
-	"github.com/guillembonet/go-wireguard-udpholepunch/e2e/common/params"
-	"github.com/guillembonet/go-wireguard-udpholepunch/storage"
+	"github.com/guillembonet/go-wireguard-holepunch/communication"
+	"github.com/guillembonet/go-wireguard-holepunch/communication/client"
+	"github.com/guillembonet/go-wireguard-holepunch/communication/server"
+	"github.com/guillembonet/go-wireguard-holepunch/connection"
+	"github.com/guillembonet/go-wireguard-holepunch/e2e/common/params"
+	"github.com/guillembonet/go-wireguard-holepunch/storage"
 )
 
 // Container represents our dependency container

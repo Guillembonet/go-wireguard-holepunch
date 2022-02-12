@@ -7,9 +7,9 @@ import (
 	"net"
 	"sync"
 
-	"github.com/guillembonet/go-wireguard-udpholepunch/communication"
-	"github.com/guillembonet/go-wireguard-udpholepunch/constants"
-	"github.com/guillembonet/go-wireguard-udpholepunch/utils"
+	"github.com/guillembonet/go-wireguard-holepunch/communication"
+	"github.com/guillembonet/go-wireguard-holepunch/constants"
+	"github.com/guillembonet/go-wireguard-holepunch/utils"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 

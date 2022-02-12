@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/guillembonet/go-wireguard-udpholepunch/communication/server"
+	"github.com/guillembonet/go-wireguard-holepunch/communication/server"
 )
 
 type Storage struct {

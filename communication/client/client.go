@@ -11,9 +11,9 @@ import (
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 	"github.com/google/gopacket/routing"
-	"github.com/guillembonet/go-wireguard-udpholepunch/connection"
-	"github.com/guillembonet/go-wireguard-udpholepunch/constants"
-	"github.com/guillembonet/go-wireguard-udpholepunch/utils"
+	"github.com/guillembonet/go-wireguard-holepunch/connection"
+	"github.com/guillembonet/go-wireguard-holepunch/constants"
+	"github.com/guillembonet/go-wireguard-holepunch/utils"
 	"github.com/mdlayher/arp"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
@@ -27,7 +27,7 @@ type ConnectionManager interface {
 	SetPeer(publicKey wgtypes.Key, cidr string, endpoint *net.UDPAddr, keepalive *time.Duration) error
 	GetPublicKey() (*wgtypes.Key, error)
 	GetInterfaceIP() (net.Addr, error)
-	SetInterfaceIP(ip string) error
+	SetInterfaceIP(ip net.IP) error
 }
 
 func NewClient(port int, manager ConnectionManager) *Client {
@@ -37,7 +37,7 @@ func NewClient(port int, manager ConnectionManager) *Client {
 	}
 }
 
-func (c *Client) Announce(serverIP net.IP, serverPort int, ip string) error {
+func (c *Client) Announce(serverIP net.IP, serverPort int, ip net.IP) error {
 	err := c.manager.SetInterfaceIP(ip)
 	if err != nil {
 		return fmt.Errorf("error setting interface ip: %w", err)

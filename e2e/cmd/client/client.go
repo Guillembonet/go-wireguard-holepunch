@@ -8,10 +8,10 @@ import (
 	"os/exec"
 	"os/signal"
 
-	"github.com/guillembonet/go-wireguard-udpholepunch/e2e/common/di"
-	"github.com/guillembonet/go-wireguard-udpholepunch/e2e/common/params"
-	"github.com/guillembonet/go-wireguard-udpholepunch/e2e/common/server"
-	"github.com/guillembonet/go-wireguard-udpholepunch/e2e/common/server/endpoints"
+	"github.com/guillembonet/go-wireguard-holepunch/e2e/common/di"
+	"github.com/guillembonet/go-wireguard-holepunch/e2e/common/params"
+	"github.com/guillembonet/go-wireguard-holepunch/e2e/common/server"
+	"github.com/guillembonet/go-wireguard-holepunch/e2e/common/server/endpoints"
 )
 
 func main() {

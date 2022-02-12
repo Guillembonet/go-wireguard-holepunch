@@ -1,12 +1,11 @@
 package endpoints
 
 import (
-	"fmt"
 	"net"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/guillembonet/go-wireguard-udpholepunch/communication/client"
+	"github.com/guillembonet/go-wireguard-holepunch/communication/client"
 )
 
 // AnnounceEndpoint represents the ping endpoint
@@ -30,18 +29,32 @@ func (ae *AnnounceEndpoint) RegisterRoutes(r gin.IRoutes) {
 	r.POST("/announce", ae.AnnounceHandler)
 }
 
-// Ping represents the ping response
-// swagger:response Ping
-type Message struct {
-	Message string `json:"message"`
+type AnnounceReq struct {
+	ServerIp    string `json:"server_ip"`
+	ServerPort  int    `json:"server_port"`
+	InterfaceIP string `json:"interface_ip"`
 }
 
-func (ae *AnnounceEndpoint) AnnounceHandler(context *gin.Context) {
-	err := ae.client.Announce(net.ParseIP(ae.serverIP), ae.serverPort, "15.13.10.1")
-	if err != nil {
-		fmt.Println(err)
-		context.JSON(http.StatusInternalServerError, err)
+func (ae *AnnounceEndpoint) AnnounceHandler(c *gin.Context) {
+	var req AnnounceReq
+	if err := c.BindJSON(&req); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, NewErrorValidation("unparsable json", err))
 		return
 	}
-	context.Status(http.StatusOK)
+	serverIp := net.ParseIP(req.ServerIp)
+	if serverIp == nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, NewErrorValidation("invalid server ip", nil))
+		return
+	}
+	interfaceIp := net.ParseIP(req.InterfaceIP)
+	if serverIp == nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, NewErrorValidation("invalid interface ip", nil))
+		return
+	}
+	err := ae.client.Announce(serverIp, req.ServerPort, interfaceIp)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, NewGenericError("announce error", err))
+		return
+	}
+	c.Status(http.StatusCreated)
 }
