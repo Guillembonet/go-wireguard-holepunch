@@ -28,6 +28,11 @@ type Peer struct {
 	Ip string
 }
 
+type Announcement struct {
+	PublicKey wgtypes.Key
+	Peer      Peer
+}
+
 func NewServer(conn *net.UDPConn, storage Storage) *Server {
 	return &Server{
 		conn:    conn,

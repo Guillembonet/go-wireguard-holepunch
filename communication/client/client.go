@@ -27,7 +27,7 @@ type ConnectionManager interface {
 	SetPeer(publicKey wgtypes.Key, cidr string, endpoint *net.UDPAddr, keepalive *time.Duration) error
 	GetPublicKey() (*wgtypes.Key, error)
 	GetInterfaceIP() (net.Addr, error)
-	SetInterfaceIP(ip net.IP) error
+	SetInterfaceIP(cidr string) error
 }
 
 func NewClient(port int, manager ConnectionManager) *Client {
@@ -37,8 +37,8 @@ func NewClient(port int, manager ConnectionManager) *Client {
 	}
 }
 
-func (c *Client) Announce(serverIP net.IP, serverPort int, ip net.IP) error {
-	err := c.manager.SetInterfaceIP(ip)
+func (c *Client) Announce(serverIP net.IP, serverPort int, cidr string) error {
+	err := c.manager.SetInterfaceIP(cidr)
 	if err != nil {
 		return fmt.Errorf("error setting interface ip: %w", err)
 	}
@@ -46,7 +46,7 @@ func (c *Client) Announce(serverIP net.IP, serverPort int, ip net.IP) error {
 	if err != nil {
 		return err
 	}
-	payload := fmt.Sprintf("%s %s %s", constants.AnnounceQuery, publicKey.String(), ip)
+	payload := fmt.Sprintf("%s %s %s", constants.AnnounceQuery, publicKey.String(), cidr)
 	return c.sendMessage(serverIP, serverPort, payload, true)
 }
 
@@ -143,7 +143,6 @@ func (c *Client) awaitReply(handle *pcap.Handle, serverIP net.IP, serverPort uin
 				return "", nil, "", fmt.Errorf("udp layer is not udp layer")
 			}
 			if udp.SrcPort != layers.UDPPort(serverPort) {
-				fmt.Println(udp.SrcPort)
 				break
 			}
 			return string(udp.Payload), ip4.SrcIP, udp.SrcPort.String(), nil

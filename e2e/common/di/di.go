@@ -9,7 +9,6 @@ import (
 	"github.com/guillembonet/go-wireguard-holepunch/communication/server"
 	"github.com/guillembonet/go-wireguard-holepunch/connection"
 	"github.com/guillembonet/go-wireguard-holepunch/e2e/common/params"
-	"github.com/guillembonet/go-wireguard-holepunch/storage"
 )
 
 // Container represents our dependency container
@@ -28,7 +27,7 @@ func (c *Container) Cleanup() {
 }
 
 // // ConstructServer creates a server for us
-func (c *Container) ConstructServer(gparams params.Generic) (*server.Server, error) {
+func (c *Container) ConstructServer(gparams params.Generic, storage server.Storage) (*server.Server, error) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -37,7 +36,7 @@ func (c *Container) ConstructServer(gparams params.Generic) (*server.Server, err
 		return nil, err
 	}
 	c.cleanup = append(c.cleanup, func() { sock.Close() })
-	storage := storage.NewStorage()
+
 	server := server.NewServer(sock, storage)
 	return server, nil
 }

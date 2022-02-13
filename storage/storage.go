@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/guillembonet/go-wireguard-holepunch/communication/server"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 type Storage struct {
@@ -32,4 +33,23 @@ func (s *Storage) GetPeer(publicKey string) (server.Peer, error) {
 	}
 	log.Printf("retrieved peer %s with ip: %s", publicKey, peer.Ip)
 	return peer, nil
+}
+
+func (s *Storage) ListAnnouncements() ([]server.Announcement, error) {
+	res := []server.Announcement{}
+	for peerKey := range s.peers {
+		publicKey, err := wgtypes.ParseKey(peerKey)
+		if err != nil {
+			return nil, err
+		}
+		peer, ok := s.peers[peerKey]
+		if !ok {
+			return nil, fmt.Errorf("peer not found with public key: %s", publicKey)
+		}
+		res = append(res, server.Announcement{
+			PublicKey: publicKey,
+			Peer:      peer,
+		})
+	}
+	return res, nil
 }

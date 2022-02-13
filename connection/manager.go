@@ -57,7 +57,6 @@ func (m *Manager) createDevice() error {
 	if d, err := m.client.Device(m.iface); err != nil || d.Name != m.iface {
 		err := utils.SudoExec("ip", "link", "add", "dev", m.iface, "type", "wireguard")
 		if err != nil {
-			fmt.Println(err)
 			return err
 		}
 		err = utils.SudoExec("ip", "link", "set", "dev", m.iface, "up")
@@ -136,12 +135,17 @@ func (m *Manager) GetPeers(publicKey wgtypes.Key) ([]wgtypes.Peer, error) {
 	return device.Peers, nil
 }
 
-func (m *Manager) SetInterfaceIP(ip net.IP) error {
-	if ip == nil {
-		return fmt.Errorf("invalid ip")
+func (m *Manager) SetInterfaceIP(cidr string) error {
+	_, net, err := net.ParseCIDR(cidr)
+	if err != nil {
+		return fmt.Errorf("invalid cidr")
+	}
+	prefix, _ := net.Mask.Size()
+	if prefix > 31 {
+		return fmt.Errorf("invalid mask size")
 	}
 	if err := utils.SudoExec("ip", "address", "flush", "dev", m.iface); err != nil {
 		return err
 	}
-	return utils.SudoExec("ip", "address", "replace", "dev", m.iface, ip.String())
+	return utils.SudoExec("ip", "address", "replace", "dev", m.iface, cidr)
 }

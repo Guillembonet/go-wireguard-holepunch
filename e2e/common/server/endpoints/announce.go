@@ -30,9 +30,9 @@ func (ae *AnnounceEndpoint) RegisterRoutes(r gin.IRoutes) {
 }
 
 type AnnounceReq struct {
-	ServerIp    string `json:"server_ip"`
-	ServerPort  int    `json:"server_port"`
-	InterfaceIP string `json:"interface_ip"`
+	ServerIp      string `json:"server_ip"`
+	ServerPort    int    `json:"server_port"`
+	InterfaceCIDR string `json:"interface_cidr"`
 }
 
 func (ae *AnnounceEndpoint) AnnounceHandler(c *gin.Context) {
@@ -46,12 +46,7 @@ func (ae *AnnounceEndpoint) AnnounceHandler(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, NewErrorValidation("invalid server ip", nil))
 		return
 	}
-	interfaceIp := net.ParseIP(req.InterfaceIP)
-	if serverIp == nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, NewErrorValidation("invalid interface ip", nil))
-		return
-	}
-	err := ae.client.Announce(serverIp, req.ServerPort, interfaceIp)
+	err := ae.client.Announce(serverIp, req.ServerPort, req.InterfaceCIDR)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, NewGenericError("announce error", err))
 		return

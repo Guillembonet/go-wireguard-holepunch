@@ -9,6 +9,9 @@ import (
 
 	"github.com/guillembonet/go-wireguard-holepunch/e2e/common/di"
 	"github.com/guillembonet/go-wireguard-holepunch/e2e/common/params"
+	ginserver "github.com/guillembonet/go-wireguard-holepunch/e2e/common/server"
+	"github.com/guillembonet/go-wireguard-holepunch/e2e/common/server/endpoints"
+	"github.com/guillembonet/go-wireguard-holepunch/storage"
 )
 
 func main() {
@@ -22,10 +25,22 @@ func main() {
 
 	errChan := make(chan error)
 
-	server, err := container.ConstructServer(gparams)
+	storage := storage.NewStorage()
+
+	server, err := container.ConstructServer(gparams, storage)
 	if err != nil {
 		panic(err)
 	}
+
+	le := endpoints.NewListEndpoint(storage)
+	ginserver := ginserver.NewServer(le)
+	if err != nil {
+		panic(err)
+	}
+
+	go func() {
+		errChan <- ginserver.Serve()
+	}()
 
 	go func() {
 		errChan <- server.Start()

@@ -2,14 +2,9 @@ package e2e
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/magefile/mage/sh"
-)
-
-const (
-	// DefaultConsumerBalance is used as default balance for hermes mock
-	DEFAULT_CONSUMER_BALANCE uint64 = 10
-	JWT_SECRET_E2E                  = "token"
 )
 
 // E2E runs the e2e tests
@@ -19,6 +14,8 @@ func E2E() error {
 		return fmt.Errorf("could not deploy containers")
 	}
 	defer TeardownCompose()
+
+	time.Sleep(2 * time.Second)
 
 	err = sh.RunV("go",
 		"test",
@@ -30,9 +27,9 @@ func E2E() error {
 }
 
 func StartCompose() (string, error) {
-	return sh.Output("docker-compose", "-f", "docker-compose.e2e.yml", "up", "-d")
+	return sh.Output("docker-compose", "-f", "./e2e/docker-compose.e2e.yml", "up", "--build", "-d")
 }
 
 func TeardownCompose() (string, error) {
-	return sh.Output("docker-compose", "-f", "docker-compose.e2e.yml", "down")
+	return sh.Output("docker-compose", "-f", "./e2e/docker-compose.e2e.yml", "down")
 }

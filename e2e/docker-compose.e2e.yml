@@ -4,6 +4,8 @@ services:
     build:
       dockerfile: ./e2e/cmd/server/Dockerfile
       context: ..
+    ports:
+      - "8081:8080"
     networks:
       internet:
         ipv4_address: 10.100.1.4
