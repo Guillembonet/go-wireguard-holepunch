@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/guillembonet/go-wireguard-holepunch/communication/server"
+	"github.com/guillembonet/go-wireguard-holepunch/server"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
