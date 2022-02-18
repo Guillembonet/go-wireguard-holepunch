@@ -11,13 +11,14 @@ import (
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 	"github.com/google/gopacket/routing"
-	"github.com/guillembonet/go-wireguard-holepunch/connection"
 	"github.com/guillembonet/go-wireguard-holepunch/constants"
+	"github.com/guillembonet/go-wireguard-holepunch/messages"
 	"github.com/guillembonet/go-wireguard-holepunch/utils"
 	"github.com/mdlayher/arp"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
+//Client represents a wireguard client
 type Client struct {
 	port    int
 	manager ConnectionManager
@@ -30,6 +31,7 @@ type ConnectionManager interface {
 	SetInterfaceIP(cidr string) error
 }
 
+//NewClient creates a new client
 func NewClient(port int, manager ConnectionManager) *Client {
 	return &Client{
 		port:    port,
@@ -37,6 +39,7 @@ func NewClient(port int, manager ConnectionManager) *Client {
 	}
 }
 
+//Announce sends a announce query to the server spoofing the source port to be the wireguard port.
 func (c *Client) Announce(serverIP net.IP, serverPort int, cidr string) error {
 	err := c.manager.SetInterfaceIP(cidr)
 	if err != nil {
@@ -47,22 +50,24 @@ func (c *Client) Announce(serverIP net.IP, serverPort int, cidr string) error {
 		return err
 	}
 	payload := fmt.Sprintf("%s %s %s", constants.AnnounceQuery, publicKey.String(), cidr)
-	return c.sendMessage(serverIP, serverPort, payload, true)
+	return c.sendSpoofedMessage(serverIP, serverPort, payload, true)
 }
 
+//GetPeer sends a get peer query to the server spoofing the source port to be the wireguard port,
+//awaits a response, and tries to connect.
 func (c *Client) GetPeer(serverIP net.IP, serverPort int, peerPublicKey wgtypes.Key) error {
 	payload := fmt.Sprintf("%s %s", constants.GetQuery, peerPublicKey.String())
-	return c.sendMessage(serverIP, serverPort, payload, true)
+	return c.sendSpoofedMessage(serverIP, serverPort, payload, true)
 }
 
-func (c *Client) sendMessage(serverIP net.IP, serverPort int, message string, expectReply bool) error {
+func (c *Client) sendSpoofedMessage(destIP net.IP, destPort int, message string, expectReply bool) error {
 	router, err := routing.New()
 	if err != nil {
 		return fmt.Errorf("error while creating routing object: %w", err)
 	}
-	iface, gatewayIP, sourceIP, err := router.Route(serverIP)
+	iface, gatewayIP, sourceIP, err := router.Route(destIP)
 	if err != nil {
-		return fmt.Errorf("error routing to ip %s: %w", serverIP, err)
+		return fmt.Errorf("error routing to ip %s: %w", destIP, err)
 	}
 	arpClient, err := arp.Dial(iface)
 	if err != nil {
@@ -84,14 +89,14 @@ func (c *Client) sendMessage(serverIP net.IP, serverPort int, message string, ex
 	}
 	ipLayer := &layers.IPv4{
 		SrcIP:    sourceIP,
-		DstIP:    serverIP,
+		DstIP:    destIP,
 		Protocol: layers.IPProtocolUDP,
 		Version:  4,
 		TTL:      32,
 	}
 	udpLayer := &layers.UDP{
 		SrcPort: layers.UDPPort(c.port),
-		DstPort: layers.UDPPort(serverPort),
+		DstPort: layers.UDPPort(destPort),
 	}
 	udpLayer.SetNetworkLayerForChecksum(ipLayer)
 	err = gopacket.SerializeLayers(buf, serializeOpts, ethLayer, ipLayer, udpLayer, gopacket.Payload([]byte(message)))
@@ -104,7 +109,7 @@ func (c *Client) sendMessage(serverIP net.IP, serverPort int, message string, ex
 	}
 	if expectReply {
 		go func() {
-			reply, srcip, srcport, err := c.awaitReply(handle, serverIP, uint16(serverPort), 5*time.Second)
+			reply, srcip, srcport, err := c.awaitReply(handle, destIP, uint16(destPort), 5*time.Second)
 			if err != nil {
 				log.Println(fmt.Errorf("error awaiting reply: %w", err))
 			}
@@ -114,7 +119,7 @@ func (c *Client) sendMessage(serverIP net.IP, serverPort int, message string, ex
 	return handle.WritePacketData(buf.Bytes())
 }
 
-func (c *Client) awaitReply(handle *pcap.Handle, serverIP net.IP, serverPort uint16, timeout time.Duration) (reply string, srcIP net.IP, srcPort string, err error) {
+func (c *Client) awaitReply(handle *pcap.Handle, originIP net.IP, originPort uint16, timeout time.Duration) (reply string, srcIP net.IP, srcPort string, err error) {
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 	packets := packetSource.Packets()
 	for {
@@ -131,7 +136,7 @@ func (c *Client) awaitReply(handle *pcap.Handle, serverIP net.IP, serverPort uin
 			if ip4, ok = ip4Layer.(*layers.IPv4); !ok {
 				return "", nil, "", fmt.Errorf("ipv4 layer is not ipv4 layer")
 			}
-			if !ip4.SrcIP.Equal(serverIP) {
+			if !ip4.SrcIP.Equal(originIP) {
 				break
 			}
 			udpLayer := packet.Layer(layers.LayerTypeUDP)
@@ -142,7 +147,7 @@ func (c *Client) awaitReply(handle *pcap.Handle, serverIP net.IP, serverPort uin
 			if udp, ok = udpLayer.(*layers.UDP); !ok {
 				return "", nil, "", fmt.Errorf("udp layer is not udp layer")
 			}
-			if udp.SrcPort != layers.UDPPort(serverPort) {
+			if udp.SrcPort != layers.UDPPort(originPort) {
 				break
 			}
 			return string(udp.Payload), ip4.SrcIP, udp.SrcPort.String(), nil
@@ -182,7 +187,7 @@ func (c *Client) handleReply(message string, srcIP net.IP, srcPort string) {
 			log.Println(fmt.Errorf("wrong number of args: is %d but should be more than %d", len(args), 2))
 		}
 		//TODO: check if from server
-		reply := &connection.GetReply{}
+		reply := &messages.GetReply{}
 		err := json.Unmarshal([]byte(args[1]), reply)
 		if err != nil {
 			log.Println(fmt.Errorf("unmarshalling reply failed: %w", err))

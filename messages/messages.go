@@ -1,4 +1,4 @@
-package connection
+package messages
 
 type GetReply struct {
 	PublicKey string
